@@ -182,9 +182,9 @@ int algoPerform(int length,int warmIter,int iter){
 }
 
 int main(){
-      algoPerform(4096,10,1000000);
-      algoPerform(512,10,10000000);
-      algoPerform(32,10,100000000);
+      algoPerform(4096*4096,10,1000000);
+      algoPerform(512*512,10,10000000);
+      algoPerform(32*32,10,100000000);
 
       sgemmPerform(4096,10,10);
       sgemmPerform(512,10,200);
