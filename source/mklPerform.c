@@ -119,13 +119,14 @@ int sgemmPerform(int length,int warmIter,int iter){
  
 int vectorMathPerform(int length,int warmIter,int iter){
   int i=0,vec_len=length;
+  int scalar = 5; 
   float fA[vec_len],fB[vec_len],fBha[vec_len];
 
   long long start,end;
   srand((unsigned)time(NULL));
 
   //generate random data
- /* for(i=0;i<vec_len;i++){
+  for(i=0;i<vec_len;i++){
     fA[i]=rand();
     fB[i]=rand();
   }
@@ -142,9 +143,9 @@ int vectorMathPerform(int length,int warmIter,int iter){
   end = getSystemTime(); 
 
   printf("vsadd Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter); 
-*/
+
   //sub
-  /*for (i=0;i<warmIter;i++){
+  for (i=0;i<warmIter;i++){
     vsSub(vec_len,fA,fB,fBha);
   }
 
@@ -181,24 +182,24 @@ int vectorMathPerform(int length,int warmIter,int iter){
 
   // pow
   for(i=0;i<warmIter;i++){
-    vsPow(vec_len,fA,fB,fBha);
+    vsPowx(vec_len,fA,scalar,fBha);
   }
 
   start = getSystemTime();
   for(i=0;i<iter;i++){
-    vsPow(vec_len,fA,fB,fBha);
+    vsPowx(vec_len,fA,scalar,fBha);
   }
   end = getSystemTime();
   printf("vspow Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
 
   //log
   for(i=0;i<warmIter;i++){
-    vsLog10(vec_len,fA,fBha);
+    vsLn(vec_len,fA,fBha);
   }
 
   start = getSystemTime();
   for(i=0;i<iter;i++){
-    vsLog10(vec_len,fA,fBha);
+    vsLn(vec_len,fA,fBha);
   }
   end = getSystemTime();
   printf("vslog10 Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
@@ -238,14 +239,14 @@ int vectorMathPerform(int length,int warmIter,int iter){
   }
   end = getSystemTime();
   printf("vslog1p Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
-*/
+
   return 0;
 }
 
 int main(){
       vectorMathPerform(4096*4096,10,100000);
-     // vectorMathPerform(512,10,1000000);
-     vectorMathPerform(32,10,10000000);
+      vectorMathPerform(512,10,1000000);
+      vectorMathPerform(32,10,10000000);
 
      // sgemmPerform(4096,10,10);
      // sgemmPerform(512,10,200);
