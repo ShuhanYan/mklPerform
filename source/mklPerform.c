@@ -118,7 +118,7 @@ int sgemmPerform(int length,int warmIter,int iter){
 }
  
 int vectorMathPerform(int length,int warmIter,int iter){
-  int i=0,vec_len=length;
+  int i=0,vec_len=length*length;
   int scalar = 5; 
   float fA[vec_len],fB[vec_len],fBha[vec_len];
 
@@ -202,7 +202,7 @@ int vectorMathPerform(int length,int warmIter,int iter){
     vsLn(vec_len,fA,fBha);
   }
   end = getSystemTime();
-  printf("vslog10 Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
+  printf("vslog Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
 
   //exp
   for(i=0;i<warmIter;i++){
@@ -244,9 +244,9 @@ int vectorMathPerform(int length,int warmIter,int iter){
 }
 
 int main(){
-      vectorMathPerform(4096*4096,10,100000);
-      vectorMathPerform(512,10,1000000);
-      vectorMathPerform(32,10,10000000);
+      vectorMathPerform(4096,10,1000);
+      vectorMathPerform(512,10,10000);
+      vectorMathPerform(32,10,100000);
 
      // sgemmPerform(4096,10,10);
      // sgemmPerform(512,10,200);
