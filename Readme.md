@@ -1,1 +1,1 @@
-make libintel64 compiler=gnu function=mklPerform 
+make sointel64 function=mklPerform
