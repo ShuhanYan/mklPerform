@@ -5,6 +5,7 @@
 #include "mkl_types.h"
 #include "mkl_cblas.h"
 #include <stdlib.h>
+
 long long getSystemTime() {
     struct timeb t;
     ftime(&t);
@@ -24,7 +25,8 @@ int sgemvPerform(int length,int warmIter,int iter){
       x = (float *)mkl_calloc(len_x, sizeof(float), 64);
       y = (float *)mkl_calloc(len_y, sizeof(float), 64);
 
-      long long start,end;
+      struct timeval start,end;
+      float timestamp = 0;
       srand((unsigned)time(NULL));
 
       //generate data
@@ -46,12 +48,13 @@ int sgemvPerform(int length,int warmIter,int iter){
       }
 
       //test
-      start = getSystemTime();
+      gettimeofday(&start,NULL);
       for(i=0;i<iter;i++){
           cblas_sgemv(layout, trans, m, n, alpha, a, lda, x, incx, beta, y, incy);
       }
-      end = getSystemTime();
-      printf("%i*%ix%i*%i: %f ms\n",length,length,length,length,(double)(end-start)/iter);
+      gettimeofday(&end,NULL);
+      timestamp = (end.tv_sec-start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+      printf("%i*%ix%i*%i: %f ms\n",length,length,length,length,(double)(timestamp)/iter);
 
       mkl_free(a);
       mkl_free(x);
@@ -121,7 +124,8 @@ int vectorMathPerform(int length,int warmIter,int iter){
   int i=0,vec_len=length*length;
   int scalar = 5; 
   float fA[vec_len],fB[vec_len],fBha[vec_len];
-
+  struct timeval start_1,end_1;
+  float timestamp = 0;
   long long start,end;
   srand((unsigned)time(NULL));
 
@@ -137,12 +141,16 @@ int vectorMathPerform(int length,int warmIter,int iter){
   }
 
   start = getSystemTime();
+
+  gettimeofday(&start_1,NULL);
   for(i=0;i<iter;i++){
     vsAdd(vec_len,fA,fB,fBha);
   }
-  end = getSystemTime(); 
-
-  printf("vsadd Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter); 
+  gettimeofday(&end_1,NULL);
+  timestamp =  (end_1.tv_sec-start_1.tv_sec) * 1000000 + (end_1.tv_usec - start_1.tv_usec);
+  end = getSystemTime();
+  
+  printf("vsadd Performtest: %i*%i %f  %f millis\n",length,length,(double)(end-start)/iter,(double) timestamp/iter); 
 
   //sub
   for (i=0;i<warmIter;i++){
@@ -244,9 +252,9 @@ int vectorMathPerform(int length,int warmIter,int iter){
 }
 
 int main(){
-      vectorMathPerform(4096,10,1000);
-      vectorMathPerform(512,10,10000);
-      vectorMathPerform(32,10,100000);
+      vectorMathPerform(4096,10,100);
+      vectorMathPerform(512,10,1000);
+      vectorMathPerform(32,10,10000);
 
      // sgemmPerform(4096,10,10);
      // sgemmPerform(512,10,200);
