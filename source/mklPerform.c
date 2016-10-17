@@ -5,11 +5,21 @@
 #include "mkl_types.h"
 #include "mkl_cblas.h"
 #include <stdlib.h>
+#include <sys/time.h>
 
 long long getSystemTime() {
     struct timeb t;
     ftime(&t);
     return 1000 * t.time + t.millitm;
+}
+
+void init(float * data, const int length, const float min, const float max, const float interval){
+  int i = 0, now = min;
+  for(i = 0; i < length - 1; i++){
+    if(now > max) now = min;
+    data[i] = now;
+    now = now + interval;
+  }
 }
 
 int sgemvPerform(int length,int warmIter,int iter){
@@ -27,7 +37,6 @@ int sgemvPerform(int length,int warmIter,int iter){
 
       struct timeval start,end;
       float timestamp = 0;
-      srand((unsigned)time(NULL));
 
       //generate data
       for(i = 0; i < rmax; i++){
@@ -86,8 +95,7 @@ int sgemmPerform(int length,int warmIter,int iter){
           return 1;
       }
 
-      long long start,end;
-      srand((unsigned)time(NULL));
+      struct timeval start,end;
 
       //generate data
       for(i = 0; i < rmax; i++){
@@ -104,12 +112,12 @@ int sgemmPerform(int length,int warmIter,int iter){
                   a, lda, b, ldb, beta, c, ldc);
       }
       //test
-      start = getSystemTime();
+      gettimeofday(&start,NULL);
       for (i=0;i<iter;i++){
           cblas_sgemm(layout, transA, transB, m, n, k, alpha,
                   a, lda, b, ldb, beta, c, ldc);
       }
-      end = getSystemTime();
+      gettimeofday(&end,NULL);
       printf("%i*%ix%i*%i: %f ms\n",length,length,length,length,(double)(end-start)/iter);
 
       //free
@@ -119,150 +127,154 @@ int sgemmPerform(int length,int warmIter,int iter){
 
       return 0;
 }
- 
-int vectorMathPerform(int length,int warmIter,int iter){
+
+
+int vectorMathPerform(int length,int warmIter,int iter, int range, int interval){
   int i=0,vec_len=length*length;
   int scalar = 5; 
-  float fA[vec_len],fB[vec_len],fBha[vec_len];
-  struct timeval start_1,end_1;
+  float *fA = (float *)mkl_calloc(vec_len, sizeof( float ), 64);//[vec_len],fB[vec_len],fBha[vec_len];
+  float *fB = (float *)mkl_calloc(vec_len, sizeof( float ), 64);
+  float *fBha = (float *)mkl_calloc(vec_len, sizeof( float ), 64);
+  struct timeval start, end;
   float timestamp = 0;
-  long long start,end;
-  srand((unsigned)time(NULL));
 
-  //generate random data
-  for(i=0;i<vec_len;i++){
-    fA[i]=rand();
-    fB[i]=rand();
-  }
+  init(fA, vec_len, -range, range, interval);
+  init(fB, vec_len, -range, range, interval);
+  init(fBha, vec_len, -range, range, interval);
 
   //add
   for (i=0;i<warmIter;i++){
     vsAdd(vec_len,fA,fB,fBha);
   }
 
-  start = getSystemTime();
-
-  gettimeofday(&start_1,NULL);
+  gettimeofday(&start,NULL);
   for(i=0;i<iter;i++){
     vsAdd(vec_len,fA,fB,fBha);
   }
-  gettimeofday(&end_1,NULL);
-  timestamp =  (end_1.tv_sec-start_1.tv_sec) * 1000000 + (end_1.tv_usec - start_1.tv_usec);
-  end = getSystemTime();
+  gettimeofday(&end,NULL);
+  timestamp =  (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
   
-  printf("vsadd Performtest: %i*%i %f  %f millis\n",length,length,(double)(end-start)/iter,(double) timestamp/iter); 
+  printf("vsadd Performtest: %i*%i %f millis\n", length, length, (double) timestamp / iter); 
 
   //sub
   for (i=0;i<warmIter;i++){
     vsSub(vec_len,fA,fB,fBha);
   }
 
-  start = getSystemTime();
+  gettimeofday(&start,NULL);
   for(i=0;i<iter;i++){
     vsSub(vec_len,fA,fB,fBha);
   }
-  end = getSystemTime();
-  printf("vssub Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
+  gettimeofday(&end,NULL);
+  timestamp =  (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
+  printf("vssub Performtest: %i*%i %f millis\n", length, length, (double) timestamp / iter);
 
   //mul
   for(i=0;i<warmIter;i++){
     vsMul(vec_len,fA,fB,fBha);
   }
   
-  start = getSystemTime();
+  gettimeofday(&start,NULL);
   for(i=0;i<iter;i++){
     vsMul(vec_len,fA,fB,fBha);
   }
-  end = getSystemTime();
-  printf("vsMul Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
+  gettimeofday(&end,NULL);
+  timestamp =  (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
+  printf("vsMul Performtest: %i*%i %f millis\n", length, length, (double) timestamp / iter);
 
   //div
   for(i=0;i<warmIter;i++){
     vsDiv(vec_len,fA,fB,fBha);
   }
 
-  start = getSystemTime();
+  gettimeofday(&start,NULL);
   for(i=0;i<iter;i++){
     vsDiv(vec_len,fA,fB,fBha);
   }
-  end = getSystemTime();
-  printf("vsdiv Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
+  gettimeofday(&end,NULL);
+  timestamp =  (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
+  printf("vsdiv Performtest: %i*%i %f millis\n", length, length, (double) timestamp / iter);
 
   // pow
   for(i=0;i<warmIter;i++){
     vsPowx(vec_len,fA,scalar,fBha);
   }
 
-  start = getSystemTime();
+  gettimeofday(&start,NULL);
   for(i=0;i<iter;i++){
     vsPowx(vec_len,fA,scalar,fBha);
   }
-  end = getSystemTime();
-  printf("vspow Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
+  gettimeofday(&end,NULL);
+  timestamp =  (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
+  printf("vspow Performtest: %i*%i %f millis\n", length, length, (double) timestamp / iter);
 
   //log
   for(i=0;i<warmIter;i++){
     vsLn(vec_len,fA,fBha);
   }
 
-  start = getSystemTime();
+  gettimeofday(&start,NULL);
   for(i=0;i<iter;i++){
     vsLn(vec_len,fA,fBha);
   }
-  end = getSystemTime();
-  printf("vslog Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
+  gettimeofday(&end,NULL);
+  timestamp =  (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
+  printf("vslog Performtest: %i*%i %f millis\n", length, length, (double) timestamp / iter);
 
   //exp
   for(i=0;i<warmIter;i++){
     vsExp(vec_len,fA,fBha);
   }
 
-  start = getSystemTime();
+  gettimeofday(&start,NULL);
   for(i=0;i<iter;i++){
     vsExp(vec_len,fA,fBha);
   }
-  end = getSystemTime();
-  printf("vsexp Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
+  gettimeofday(&end,NULL);
+  timestamp =  (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
+  printf("vsexp Performtest: %i*%i %f millis\n", length, length, (double) timestamp / iter);
 
   //sqrt
   for(i=0;i<warmIter;i++){
     vsSqrt(vec_len,fA,fBha);
   }
 
-  start = getSystemTime();
+  gettimeofday(&start,NULL);
   for(i=0;i<iter;i++){
     vsSqrt(vec_len,fA,fBha);
   }
-  end = getSystemTime();
-  printf("vssqrt Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
+  gettimeofday(&end,NULL);
+  timestamp =  (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
+  printf("vssqrt Performtest: %i*%i %f millis\n", length, length, (double) timestamp / iter);
 
   //log1p
   for(i=0;i<warmIter;i++){
     vsLog1p(vec_len,fA,fBha);
   }
 
-  start = getSystemTime();
+  gettimeofday(&start,NULL);
   for(i=0;i<iter;i++){
     vsLog1p(vec_len,fA,fBha);
   }
-  end = getSystemTime();
-  printf("vslog1p Performtest: %i*%i %f millis\n",length,length,(double)(end-start)/iter);
+  gettimeofday(&end,NULL);
+  timestamp =  (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
+  printf("vslog1p Performtest: %i*%i %f millis\n", length, length, (double) timestamp / iter);
 
   return 0;
 }
 
 int main(){
-      vectorMathPerform(4096,10,100);
-      vectorMathPerform(512,10,1000);
-      vectorMathPerform(32,10,10000);
+      vectorMathPerform(4096,10,100,1000,0.5);
+      vectorMathPerform(512,10,10000,1000,0.5);
+      vectorMathPerform(32,10,100000,500,1);
 
-     // sgemmPerform(4096,10,10);
-     // sgemmPerform(512,10,200);
-     // sgemmPerform(32,10,100000);
+      sgemmPerform(4096,10,10);
+      sgemmPerform(512,10,200);
+      sgemmPerform(32,10,100000);
 
-     // sgemvPerform(4096,10,300);
-     // sgemvPerform(512,10,100000);
-     // sgemvPerform(32,10,1000000);
+      sgemvPerform(4096,10,300);
+      sgemvPerform(512,10,100000);
+      sgemvPerform(32,10,1000000);
 
 }
 
