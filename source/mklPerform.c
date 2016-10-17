@@ -62,8 +62,8 @@ int sgemvPerform(int length,int warmIter,int iter){
           cblas_sgemv(layout, trans, m, n, alpha, a, lda, x, incx, beta, y, incy);
       }
       gettimeofday(&end,NULL);
-      timestamp = (end.tv_sec-start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
-      printf("%i*%ix%i*%i: %f ms\n",length,length,length,length,(double)(timestamp)/iter);
+      timestamp = (end.tv_sec-start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec)/1000;
+      printf("%i*%ix%i: %f ms\n",length,length,length,(double)(timestamp)/iter);
 
       mkl_free(a);
       mkl_free(x);
@@ -119,7 +119,7 @@ int sgemmPerform(int length,int warmIter,int iter){
                   a, lda, b, ldb, beta, c, ldc);
       }
       gettimeofday(&end,NULL);
-      timestamp = (end.tv_sec-start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+      timestamp = (end.tv_sec-start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec)/1000;
       printf("%i*%ix%i*%i: %f ms\n",length,length,length,length,(double)(timestamp)/iter);
 
       //free
