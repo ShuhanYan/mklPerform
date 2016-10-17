@@ -96,6 +96,7 @@ int sgemmPerform(int length,int warmIter,int iter){
       }
 
       struct timeval start,end;
+      float timestamp = 0;
 
       //generate data
       for(i = 0; i < rmax; i++){
@@ -118,7 +119,8 @@ int sgemmPerform(int length,int warmIter,int iter){
                   a, lda, b, ldb, beta, c, ldc);
       }
       gettimeofday(&end,NULL);
-      printf("%i*%ix%i*%i: %f ms\n",length,length,length,length,(double)(end-start)/iter);
+      timestamp = (end.tv_sec-start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+      printf("%i*%ix%i*%i: %f ms\n",length,length,length,length,(double)(timestamp)/iter);
 
       //free
       mkl_free(a);
