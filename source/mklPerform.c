@@ -14,8 +14,8 @@ long long getSystemTime() {
 }
 
 void init(float * data, const int length, const float min, const float max, const float interval){
-  int i = 0, now = min;
-  for(i = 0; i < length - 1; i++){
+  float now = min;
+  for(int i = 0; i < length; i++){
     if(now > max) now = min;
     data[i] = now;
     now = now + interval;
@@ -130,11 +130,10 @@ int sgemmPerform(int length,int warmIter,int iter){
       return 0;
 }
 
-
-int vectorMathPerform(int length,int warmIter,int iter, int range, int interval){
+int vectorMathPerform(int length, int warmIter, int iter, float range, float interval){
   int i=0,vec_len=length*length;
   int scalar = 5; 
-  float *fA = (float *)mkl_calloc(vec_len, sizeof( float ), 64);//[vec_len],fB[vec_len],fBha[vec_len];
+  float *fA = (float *)mkl_calloc(vec_len, sizeof( float ), 64);
   float *fB = (float *)mkl_calloc(vec_len, sizeof( float ), 64);
   float *fBha = (float *)mkl_calloc(vec_len, sizeof( float ), 64);
   struct timeval start, end;
@@ -153,9 +152,9 @@ int vectorMathPerform(int length,int warmIter,int iter, int range, int interval)
   for(i=0;i<iter;i++){
     vsAdd(vec_len,fA,fB,fBha);
   }
-  gettimeofday(&end,NULL);
+  gettimeofday(&end,NULL);  
   timestamp =  (end.tv_sec - start.tv_sec) * 1000 + (end.tv_usec - start.tv_usec) / 1000;
-  
+
   printf("vsadd Performtest: %i*%i %f millis\n", length, length, (double) timestamp / iter); 
 
   //sub
@@ -266,9 +265,9 @@ int vectorMathPerform(int length,int warmIter,int iter, int range, int interval)
 }
 
 int main(){
-      vectorMathPerform(4096,10,100,1000,0.5);
-      vectorMathPerform(512,10,10000,1000,0.5);
-      vectorMathPerform(32,10,100000,500,1);
+      vectorMathPerform(4096,10,50,1000,0.5);
+      vectorMathPerform(512,10,1000,1000,0.5);
+      vectorMathPerform(32,10,10000,500,1);
 
       sgemmPerform(4096,10,10);
       sgemmPerform(512,10,200);
